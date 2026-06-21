@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10...3.31)
 project(needle C CXX)
 cmake_policy(SET CMP0146 OLD)
 
 # find correct version of Python
 execute_process(COMMAND python3-config --prefix
-  OUTPUT_VARIABLE Python_ROOT_DIR)
+  OUTPUT_VARIABLE Python_ROOT_DIR
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
 find_package(Python COMPONENTS Development Interpreter REQUIRED)
 include_directories(${Python_INCLUDE_DIRS})
 
@@ -67,6 +68,13 @@ if(CUDA_FOUND)
   else()
     # set to 3.7 the flag of K80
     CUDA_SELECT_NVCC_ARCH_FLAGS(ARCH_FLAGS 3.7)
+  endif()
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+    find_program(CUDA_GXX12 g++-12)
+    if(CUDA_GXX12)
+      set(CUDA_HOST_COMPILER ${CUDA_GXX12})
+    endif()
   endif()
 
   # set arch flags properly

@@ -258,11 +258,14 @@ class NDArray:
             new_shape (tuple): new shape of the array
 
         Returns:
-            NDArray : reshaped array; this will point to thep
+            NDArray : reshaped array; this will point to the same memory as the original array
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        self._shape = new_shape
+        self._strides = self.compact_strides(new_shape)
+        return self
         ### END YOUR SOLUTION
 
     def permute(self, new_axes: tuple[int, ...]) -> "NDArray":
@@ -287,7 +290,11 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        self._shape = tuple(self.shape[i] for i in new_axes)
+        self._strides = tuple(self.strides[i] for i in new_axes)
+        return self
+
         ### END YOUR SOLUTION
 
     def broadcast_to(self, new_shape: tuple[int, ...]) -> "NDArray":
@@ -311,7 +318,11 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        # raise NotImplementedError()
+        self._shape = new_shape
+        self._strides = tuple(0 if self.shape[i] == 1 else self.strides[i] for i in range(len(self.shape)))
+
+        return self
         ### END YOUR SOLUTION]
 
     ### Get and set elements
@@ -378,9 +389,18 @@ class NDArray:
         assert len(slices) == self.ndim, "Need indexes equal to number of dimensions"
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        new_shape = tuple((item.stop - item.start + item.step - 1) // item.step for item in slices)
+        new_strides = tuple(self.strides[i] * item.step for i, item in enumerate(slices))
+        new_offset = self._offset + sum(self.strides[i] * item.start for i, item in enumerate(slices))
+        return NDArray.make(
+            new_shape,
+            strides=new_strides,
+            device=self.device,
+            handle=self._handle,
+            offset=new_offset,
+        )
         ### END YOUR SOLUTION
-
+    
     def __setitem__(self, idxs: int | slice | tuple[int | slice, ...], other: Union["NDArray", float]) -> None:
         """Set the values of a view into an array, using the same semantics
         as __getitem__()."""
